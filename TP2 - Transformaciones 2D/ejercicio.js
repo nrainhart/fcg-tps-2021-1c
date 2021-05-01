@@ -11,7 +11,7 @@
 // Las rotaciones vienen expresadas en grados. 
 function BuildTransform( positionX, positionY, rotation, scale )
 {
-	return Array(1,0,0,0,1,0,0,0,1);
+	return Array(1,0,0,0,1,0,0,0,1).map(point => point * scale);
 }
 
 // Esta función retorna una matriz que resulta de la composición de trans1 y trans2. Ambas

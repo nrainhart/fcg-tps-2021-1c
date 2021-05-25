@@ -227,7 +227,7 @@ function DrawScene()
 	// Le pedimos a las lineas y a la curva bezier que se dibujen 
 	// (ver las definiciones en las clases LineDrawer y CurveDrawer)
 	curveDrawer.draw();
-	lineDrawer.draw();
+	//lineDrawer.draw();
 }
 
 // Función que compila los shaders que se le pasan por parámetro (vertex & fragment shaders)

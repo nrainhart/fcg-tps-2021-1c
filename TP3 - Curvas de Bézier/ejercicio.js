@@ -13,7 +13,7 @@ class CurveDrawer
 		this.pointLocations = [0,1,2,3].map((_, i) => gl.getUniformLocation( this.prog, `p${i}`));
 
 		// Muestreo del parámetro t
-		this.steps = 100;
+		this.steps = 1000;
 		var tv = [];
 		for ( var i=0; i<this.steps; ++i ) {
 			tv.push( i / (this.steps-1) );
@@ -90,8 +90,9 @@ var curvesVS = `
 	uniform vec2 p3;
 	void main()
 	{ 
-		vec2 t_point = pow((1.0-t),3.0)*p0 + 3.0*pow((1.0-t), 2.0)*p1+3.0*(1.0-t)*pow(t,2.0)*p2 + pow(t, 3.0)*p3;
+		vec2 t_point = pow((1.0-t),3.0)*p0 + 3.0*pow((1.0-t), 2.0)*t*p1+3.0*(1.0-t)*pow(t,2.0)*p2 + pow(t, 3.0)*p3;
 		gl_Position = mvp * vec4(t_point,0,1);
+		//gl_Position = mvp * vec4(p2+(p3-p2)*t,0,1);
 	}
 `;
 
@@ -100,6 +101,6 @@ var curvesFS = `
 	precision mediump float;
 	void main()
 	{
-		gl_FragColor = vec4(0,1,1,1);
+		gl_FragColor = vec4(0,0,1,1);
 	}
 `;

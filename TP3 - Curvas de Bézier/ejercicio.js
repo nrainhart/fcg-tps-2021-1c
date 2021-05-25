@@ -1,6 +1,6 @@
 // Completar la implementación de esta clase y el correspondiente vertex shader. 
 // No será necesario modificar el fragment shader a menos que, por ejemplo, quieran modificar el color de la curva.
-class CurveDrawer 
+class CurveDrawer
 {
 	// Inicialización de los shaders y buffers
 	constructor()
@@ -10,14 +10,11 @@ class CurveDrawer
 
 		// Inicialización y obtención de las ubicaciones de los atributos y variables uniformes
 		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
-		this.pointLocations = [0,1,2,3].map((_, i) => gl.getUniformLocation( this.prog, `p${i}`));
+		this.pointLocations = Array.from({length: 4},(_, i) => gl.getUniformLocation( this.prog, `p${i}`));
 
 		// Muestreo del parámetro t
-		this.steps = 1000;
-		var tv = [];
-		for ( var i=0; i<this.steps; ++i ) {
-			tv.push( i / (this.steps-1) );
-		}
+		this.steps = 100;
+		const tv = Array.from({length: this.steps},(_, i) => i / (this.steps-1));
 
 		// Creación del vertex buffer y seteo de contenido
 		this.buffer = gl.createBuffer();
@@ -47,7 +44,7 @@ class CurveDrawer
 	updatePoints(pt)
 	{
 		// [Completar] Actualización de las variables uniformes para los puntos de control
-		// [Completar] No se olviden de hacer el binding del programa antes de setear las variables 
+		// [Completar] No se olviden de hacer el binding del programa antes de setear las variables
 		// [Completar] Pueden acceder a las coordenadas de los puntos de control consultando el arreglo pt[]:
 		// var x = pt[i].getAttribute("cx");
 		// var y = pt[i].getAttribute("cy");
@@ -69,7 +66,7 @@ class CurveDrawer
 		// Binding del buffer de posiciones
 		gl.bindBuffer( gl.ARRAY_BUFFER, this.buffer );
 		// Habilitamos el atributo
-		gl.vertexAttribPointer( this.stepVec, 2, gl.FLOAT, false, 0, 0 );
+		gl.vertexAttribPointer( this.stepVec, 1, gl.FLOAT, false, 0, 0 );
 		gl.enableVertexAttribArray( this.stepVec );
 
 		gl.drawArrays( gl.LINE_STRIP, 0, this.steps);
@@ -92,7 +89,6 @@ var curvesVS = `
 	{ 
 		vec2 t_point = pow((1.0-t),3.0)*p0 + 3.0*pow((1.0-t), 2.0)*t*p1+3.0*(1.0-t)*pow(t,2.0)*p2 + pow(t, 3.0)*p3;
 		gl_Position = mvp * vec4(t_point,0,1);
-		//gl_Position = mvp * vec4(p2+(p3-p2)*t,0,1);
 	}
 `;
 

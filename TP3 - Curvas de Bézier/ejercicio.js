@@ -6,40 +6,73 @@ class CurveDrawer
 	constructor()
 	{
 		// Creamos el programa webgl con los shaders para los segmentos de recta
-		this.prog   = InitShaderProgram( curvesVS, curvesFS );
+		this.prog   = InitShaderProgram( curvesVS, curvesFS);
 
-		// [Completar] Inicialización y obtención de las ubicaciones de los atributos y variables uniformes
-				
+		// Inicialización y obtención de las ubicaciones de los atributos y variables uniformes
+		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
+		this.pointLocations = [0,1,2,3].map((_, i) => gl.getUniformLocation( this.prog, `p${i}`));
+
 		// Muestreo del parámetro t
 		this.steps = 100;
 		var tv = [];
 		for ( var i=0; i<this.steps; ++i ) {
 			tv.push( i / (this.steps-1) );
 		}
-		
-		// [Completar] Creación del vertex buffer y seteo de contenido
+
+		// Creación del vertex buffer y seteo de contenido
+		this.buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tv), gl.STATIC_DRAW);
+
+		this.stepVec = gl.getAttribLocation(this.prog, 't');
+		// gl.vertexAttribPointer(this.stepVec,2, gl.FLOAT, false, 0, 0 ) TODO hacer esto 1 sola vez?
+		// gl.enableVertexAttribArray(this.stepVec);
 	}
 
 	// Actualización del viewport (se llama al inicializar la web o al cambiar el tamaño de la pantalla)
 	setViewport( width, height )
 	{
 		// [Completar] Matriz de transformación.
-		// [Completar] Binding del programa y seteo de la variable uniforme para la matriz. 
+		// [Completar] Binding del programa y seteo de la variable uniforme para la matriz.
+		var trans = [ 2/width,0       ,0,0,
+			          0,     -2/height,0,0,
+			          0,0,             1,0,
+			         -1,1,             0,1 ];
+
+		// Seteamos la matriz en la variable uniforme del shader
+		gl.useProgram( this.prog );
+		gl.uniformMatrix4fv( this.mvp,false, trans );
 	}
 
-	updatePoints( pt )
+	updatePoints(pt)
 	{
 		// [Completar] Actualización de las variables uniformes para los puntos de control
 		// [Completar] No se olviden de hacer el binding del programa antes de setear las variables 
 		// [Completar] Pueden acceder a las coordenadas de los puntos de control consultando el arreglo pt[]:
 		// var x = pt[i].getAttribute("cx");
 		// var y = pt[i].getAttribute("cy");
+
+		const controlPoints = pt.map(point => ([point.getAttribute("cx"), point.getAttribute("cy")]));
+
+		gl.useProgram( this.prog );
+		this.pointLocations.forEach((location, i) => gl.uniform2fv(location, controlPoints[i]))
 	}
+
 
 	draw()
 	{
 		// [Completar] Dibujamos la curva como una LINE_STRIP
 		// [Completar] No se olviden de hacer el binding del programa y de habilitar los atributos de los vértices
+
+		gl.useProgram(this.prog);
+
+		// Binding del buffer de posiciones
+		gl.bindBuffer( gl.ARRAY_BUFFER, this.buffer );
+		// Habilitamos el atributo
+		gl.vertexAttribPointer( this.stepVec, 2, gl.FLOAT, false, 0, 0 );
+		gl.enableVertexAttribArray( this.stepVec );
+
+		gl.drawArrays( gl.LINE_STRIP, 0, this.steps);
 	}
 }
 
@@ -57,7 +90,8 @@ var curvesVS = `
 	uniform vec2 p3;
 	void main()
 	{ 
-		gl_Position = vec4(0,0,0,1);
+		vec2 t_point = pow((1.0-t),3.0)*p0 + 3.0*pow((1.0-t), 2.0)*p1+3.0*(1.0-t)*pow(t,2.0)*p2 + pow(t, 3.0)*p3;
+		gl_Position = mvp * vec4(t_point,0,1);
 	}
 `;
 
@@ -66,6 +100,6 @@ var curvesFS = `
 	precision mediump float;
 	void main()
 	{
-		gl_FragColor = vec4(0,0,1,1);
+		gl_FragColor = vec4(0,1,1,1);
 	}
 `;

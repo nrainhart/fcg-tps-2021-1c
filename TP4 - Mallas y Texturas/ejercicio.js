@@ -39,20 +39,42 @@
 // una matriz de 4x4 almacenada como un arreglo en orden column-major. En el archivo project4.html ya está
 // implementada la función MatrixMult, pueden reutilizarla. 
 
-function GetModelViewProjection( projectionMatrix, translationX, translationY, translationZ, rotationX, rotationY )
+function GetModelViewProjection(projectionMatrix, translationX, translationY, translationZ, rotationX, rotationY)
 {
 	// [COMPLETAR] Modificar el código para formar la matriz de transformación.
 
 	// Matriz de traslación
-	var trans = [
+	const trans = [
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
 		translationX, translationY, translationZ, 1
 	];
 
-	var mvp = MatrixMult( projectionMatrix, trans );
+	// Invertimos el signo de los ángulos para que el sentido de la rotación sea horario en vez de anti-horario
+	const cosRotX = Math.cos(-rotationX);
+	const sinRotX = Math.sin(-rotationX);
+	const rotX = [
+		1, 0, 0, 0,
+		0, cosRotX, -sinRotX, 0,
+		0, sinRotX, cosRotX, 0,
+		0, 0, 0, 1
+	];
+	const cosRotY = Math.cos(-rotationY);
+	const sinRotY = Math.sin(-rotationY);
+	const rotY = [
+		cosRotY, 0, sinRotY, 0,
+		0, 1, 0, 0,
+		-sinRotY, 0, cosRotY, 0,
+		0, 0, 0, 1
+	];
+
+	const mvp = [rotY, rotX, trans, projectionMatrix].reduce(composeTransforms);
 	return mvp;
+}
+
+function composeTransforms(firstTransform, secondTransform) {
+	return MatrixMult(secondTransform, firstTransform)
 }
 
 // [COMPLETAR] Completar la implementación de esta clase.

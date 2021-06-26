@@ -23,18 +23,30 @@ function ComposeTransforms(trans1, trans2) {
 }
 
 function uniformScaleMatrix(scale) {
-  return [scale, 0, 0, 0, scale, 0, 0, 0, 1];
+  return [
+    scale, 0, 0,
+    0, scale, 0,
+    0, 0, 1
+  ];
 }
 
 function translationMatrix(offsetX, offsetY) {
-  return [1, 0, 0, 0, 1, 0, offsetX, offsetY, 1];
+  return [
+    1, 0, 0,
+    0, 1, 0,
+    offsetX, offsetY, 1
+  ];
 }
 
 function rotationMatrix(rotationInDegrees) {
   const rotationInRadians = rotationInDegrees * Math.PI / 180;
   const cos = Math.cos(rotationInRadians);
   const sin = Math.sin(rotationInRadians);
-  return [cos, sin, 0, -sin, cos, 0, 0, 0, 1];
+  return [
+    cos, sin, 0,
+    -sin, cos, 0,
+    0, 0, 1
+  ];
 }
 
 function matrixMultiplication(aMatrix, anotherMatrix) {

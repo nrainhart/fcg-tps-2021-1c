@@ -86,26 +86,32 @@ class MeshDrawer
 		// [COMPLETAR] inicializaciones
 
 		// 1. Compilamos el programa de shaders
-		
+		this.prog = InitShaderProgram(meshVS, meshFS);
+
 		// 2. Obtenemos los IDs de las variables uniformes en los shaders
+		this.mvp = gl.getUniformLocation(this.prog, 'mvp');
 
 		// 3. Obtenemos los IDs de los atributos de los vértices en los shaders
+		this.vertPos = gl.getAttribLocation(this.prog, 'pos');
 
-		// 4. Obtenemos los IDs de los atributos de los vértices en los shaders
-
-		// ...
+		// 4. Creamos el buffer para los vertices
+		this.vertbuffer = gl.createBuffer();
 	}
 	
 	// Esta función se llama cada vez que el usuario carga un nuevo archivo OBJ.
 	// En los argumentos de esta función llegan un arreglo con las posiciones 3D de los vértices
 	// y un arreglo 2D con las coordenadas de textura. Todos los items en estos arreglos son del tipo float. 
-	// Los vértices se componen de a tres elementos consecutivos en el arreglo vertexPos [x0,y0,z0,x1,y1,z1,..,xn,yn,zn]
+	// Los vértices se componen de a tres elementos consecutivos en el arreglo vertPos [x0,y0,z0,x1,y1,z1,..,xn,yn,zn]
 	// De manera similar, las coordenadas de textura se componen de a 2 elementos consecutivos y se
 	// asocian a cada vértice en orden. 
-	setMesh( vertPos, texCoords )
+	setMesh(vertPos, texCoords)
 	{
 		// [COMPLETAR] Actualizar el contenido del buffer de vértices
+
 		this.numTriangles = vertPos.length / 3;
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
 	}
 	
 	// Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Intercambiar Y-Z'
@@ -122,14 +128,20 @@ class MeshDrawer
 		// [COMPLETAR] Completar con lo necesario para dibujar la colección de triángulos en WebGL
 		
 		// 1. Seleccionamos el shader
-	
+		gl.useProgram(this.prog);
+
 		// 2. Setear matriz de transformacion
-		
-	    // 3.Binding de los buffers
-		
-		// ...
-		// Dibujamos
-		// gl.drawArrays( gl.TRIANGLES, 0, this.numTriangles * 3 );
+		gl.uniformMatrix4fv(this.mvp, false, trans);
+
+		// 3.Binding de los buffers
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer);
+
+		// 4. Habilitamos el atributo
+		gl.vertexAttribPointer(this.vertPos, 3, gl.FLOAT, false, 0, 0 );
+		gl.enableVertexAttribArray(this.vertPos);
+
+		// 5. Dibujamos
+		gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles * 3);
 	}
 	
 	// Esta función se llama para setear una textura sobre la malla
@@ -164,6 +176,6 @@ var meshFS = `
 	precision mediump float;
 	void main()
 	{		
-		gl_FragColor = vec4( 1, 0, 0, 1 );
+		gl_FragColor = vec4(1,0,gl_FragCoord.z*gl_FragCoord.z,1);
 	}
 `;

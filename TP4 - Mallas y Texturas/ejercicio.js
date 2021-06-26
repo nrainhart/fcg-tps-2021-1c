@@ -90,6 +90,7 @@ class MeshDrawer
 
 		// 2. Obtenemos los IDs de las variables uniformes en los shaders
 		this.mvp = gl.getUniformLocation(this.prog, 'mvp');
+		this.swapYZUniform = gl.getUniformLocation(this.prog, 'swapYZ');
 
 		// 3. Obtenemos los IDs de los atributos de los vértices en los shaders
 		this.vertPos = gl.getAttribLocation(this.prog, 'pos');
@@ -116,14 +117,17 @@ class MeshDrawer
 	
 	// Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Intercambiar Y-Z'
 	// El argumento es un booleano que indica si el checkbox está tildado
-	swapYZ( swap )
+	swapYZ(swap)
 	{
 		// [COMPLETAR] Setear variables uniformes en el vertex shader
+
+		gl.useProgram(this.prog);
+		gl.uniform1i(this.swapYZUniform, swap);
 	}
 	
 	// Esta función se llama para dibujar la malla de triángulos
 	// El argumento es la matriz de transformación, la misma matriz que retorna GetModelViewProjection
-	draw( trans )
+	draw(trans)
 	{
 		// [COMPLETAR] Completar con lo necesario para dibujar la colección de triángulos en WebGL
 		
@@ -165,9 +169,10 @@ class MeshDrawer
 var meshVS = `
 	attribute vec3 pos;
 	uniform mat4 mvp;
+	uniform bool swapYZ;
 	void main()
 	{ 
-		gl_Position = mvp * vec4(pos,1);
+		gl_Position = mvp * vec4(swapYZ ? pos.xzy : pos,1);
 	}
 `;
 

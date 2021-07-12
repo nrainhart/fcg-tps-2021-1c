@@ -114,7 +114,7 @@ class MeshDrawer
 
 		// 3. Obtenemos los IDs de los atributos de los vértices en los shaders
 		this.vertPos = gl.getAttribLocation(this.prog, 'pos');
-		this.normalPos = gl.getAttribLocation(this.prog, 'normCoord');
+		this.normalPos = gl.getAttribLocation(this.prog, 'ncoord');
 
 		// 4. Creamos el buffer para los vertices
 		this.vertbuffer = gl.createBuffer();
@@ -131,8 +131,12 @@ class MeshDrawer
 
 		this.texCoordsLocation = gl.getAttribLocation(this.prog, 'tcoord');
 
+		// 6. Iluminación
+		this.shininessLocation = gl.getUniformLocation(this.prog, 'shininess');
+		this.normalMatrixLocation = gl.getUniformLocation(this.prog, 'mn');
+		this.lightDirLocation = gl.getUniformLocation(this.prog, 'lightDir');
 	}
-	
+
 	// Esta función se llama cada vez que el usuario carga un nuevo
 	// archivo OBJ. En los argumentos de esta función llegan un areglo
 	// con las posiciones 3D de los vértices, un arreglo 2D con las
@@ -159,9 +163,10 @@ class MeshDrawer
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
 		// 3. Binding y seteo del buffer de normales
-
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalbuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 	}
-	
+
 	// Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Intercambiar Y-Z'
 	// El argumento es un booleano que indica si el checkbox está tildado
 	swapYZ(swap)
@@ -170,21 +175,33 @@ class MeshDrawer
 		gl.useProgram(this.prog);
 		gl.uniform1i(this.swapYZUniform, swap);
 	}
-	
+
 	// Esta función se llama para dibujar la malla de triángulos
 	// El argumento es la matriz model-view-projection (matrixMVP),
 	// la matriz model-view (matrixMV) que es retornada por 
 	// GetModelViewProjection y la matriz de transformación de las 
 	// normales (matrixNormal) que es la inversa transpuesta de matrixMV
-	draw( matrixMVP, matrixMV, matrixNormal )
+	draw(matrixMVP, matrixMV, matrixNormal)
 	{
 		// [COMPLETAR] Completar con lo necesario para dibujar la colección de triángulos en WebGL
-
+		console.log(matrixMV);
+		console.log(matrixNormal);
 		// 1. Seleccionamos el shader
 		gl.useProgram(this.prog);
 
-		// 2. Setear matriz de transformacion
+		// 2. Setear matriz de transformación
+		gl.uniformMatrix4fv(this.mv, false, matrixMV);
 		gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
+
+		// 2''. Setear matriz de transformación de normales
+		gl.uniformMatrix3fv(this.normalMatrixLocation, false, matrixNormal);
+
+		// 3''.
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalbuffer);
+
+		// 4''.
+		gl.vertexAttribPointer(this.normalPos, 3, gl.FLOAT, false, 0, 0 );
+		gl.enableVertexAttribArray(this.normalPos);
 
 		// 3'.
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.texPosbuffer);
@@ -203,9 +220,9 @@ class MeshDrawer
 		// 5. Dibujamos
 		gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles * 3);
 	}
-	
+
 	// Esta función se llama para setear una textura sobre la malla
-	// El argumento es un componente <img> de html que contiene la textura. 
+	// El argumento es un componente <img> de html que contiene la textura.
 	setTexture( img )
 	{
 		gl.bindTexture( gl.TEXTURE_2D, this.textura);
@@ -224,25 +241,29 @@ class MeshDrawer
 		gl.useProgram(this.prog);
 		gl.uniform1i (this.texGPULocation, 0 ); // Unidad 0
 	}
-		
-        // Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Mostrar textura'
+
+	// Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Mostrar textura'
 	// El argumento es un boleano que indica si el checkbox está tildado
 	showTexture( show )
 	{
 		gl.useProgram(this.prog);
 		gl.uniform1i(this.useTexLocation, show);
 	}
-	
+
 	// Este método se llama al actualizar la dirección de la luz desde la interfaz
 	setLightDir( x, y, z )
-	{		
+	{
 		// [COMPLETAR] Setear variables uniformes en el fragment shader para especificar la dirección de la luz
+		gl.useProgram(this.prog);
+		gl.uniform3f(this.lightDirLocation, x, y, z);
 	}
-		
-	// Este método se llama al actualizar el brillo del material 
+
+	// Este método se llama al actualizar el brillo del material
 	setShininess( shininess )
-	{		
+	{
 		// [COMPLETAR] Setear variables uniformes en el fragment shader para especificar el brillo.
+		gl.useProgram(this.prog);
+		gl.uniform1f(this.shininessLocation, shininess);
 	}
 }
 
@@ -250,20 +271,19 @@ class MeshDrawer
 
 // [COMPLETAR] Calcular iluminación utilizando Blinn-Phong.
 
-// Recordar que: 
+// Recordar que:
 // Si declarás las variables pero no las usás, es como que no las declaraste
-// y va a tirar error. Siempre va punto y coma al finalizar la sentencia. 
-// Las constantes en punto flotante necesitan ser expresadas como x.y, 
+// y va a tirar error. Siempre va punto y coma al finalizar la sentencia.
+// Las constantes en punto flotante necesitan ser expresadas como x.y,
 // incluso si son enteros: ejemplo, para 4 escribimos 4.0.
 
 // Vertex Shader
 var meshVS = `
 	attribute vec3 pos;
 	attribute vec2 tcoord;
+	attribute vec3 ncoord;
 
 	uniform mat4 mvp;
-	uniform mat4 mv;
-
 	uniform bool swapYZ;
 
 	varying vec2 texCoord;
@@ -272,7 +292,9 @@ var meshVS = `
 
 	void main()
 	{
+		
 		texCoord = tcoord;
+		normCoord = ncoord;
 		gl_Position = mvp * vec4(swapYZ ? pos.xzy : pos,1);
 	}
 `;
@@ -286,7 +308,10 @@ var meshVS = `
 var meshFS = `
 	precision mediump float;
 
+	uniform vec3 lightDir;
+	uniform float shininess;
 	uniform mat3 mn;
+	uniform mat4 mv;
 
 	varying vec2 texCoord;
 	varying vec3 normCoord;
@@ -297,6 +322,17 @@ var meshFS = `
 
 	void main()
 	{
-		gl_FragColor = useTexture ? texture2D(texGPU, texCoord) : vec4(1,0,gl_FragCoord.z*gl_FragCoord.z,1);
+		vec3 normal = normalize(mn * normCoord);
+		float cosTita = max(0.0, dot(normal,lightDir));
+		
+		vec4 v = -1.0*(mv*vertCoord);
+		vec4 r = vec4(2.0*dot(lightDir, normCoord)*normCoord - lightDir, 1);
+		float cosDelta = max(0.0, dot(v,r));
+		
+		vec4 kd = useTexture ? texture2D(texGPU, texCoord) : vec4(1.0,0.0,gl_FragCoord.z*gl_FragCoord.z,1.0);
+		vec4 i = vec4(1.0, 1.0, 1.0, 1.0);
+		vec4 ks = vec4(1.0, 1.0, 1.0, 1.0);
+		
+		gl_FragColor = cosTita * i * (kd + (pow(cosTita, shininess)*ks)/cosTita) + 0.01 * kd;
 	}
 `;

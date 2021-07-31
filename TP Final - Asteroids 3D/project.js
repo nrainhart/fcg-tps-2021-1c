@@ -53,7 +53,7 @@ function UpdateCanvasSize()
 	UpdateProjectionMatrix();
 }
 
-function cameraDirectionTransform(camRotX, camRotY) {
+function cameraDirectionTransform(camRotX, camRotY, translationZ) {
 	const matRotX = [
 		[1, 0, 0, 0],
 		[0, Math.cos(camRotX), -Math.sin(camRotX), 0],
@@ -70,30 +70,45 @@ function cameraDirectionTransform(camRotX, camRotY) {
 	const u = rotateXY([1, 0, 0, 0]);
 	const v = rotateXY([0, 1, 0, 0]);
 	const w = rotateXY([0, 0, 1, 0]);
-	return [
+	return MatrixMult([
 		u[0], v[0], w[0], 0,
 		u[1], v[1], w[1], 0,
 		u[2], v[2], w[2], 0,
 		0, 0, 0, 1,
-	];
+	], [
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		-translationZ * w[0], -translationZ * w[1], -translationZ * w[2], 1,
+	]);
 }
 
 // Calcula la matriz de perspectiva (column-major)
 function ProjectionMatrix( canvas, translationZ, fov_angle=60, camRotX, camRotY )
 {
 	const ratio = canvas.width / canvas.height;
-	let n = (translationZ - 1.74);
+	let boxDepthRadius = 100//1.74;
+	let n = (translationZ - boxDepthRadius);
 	const min_n = 0.001;
 	if ( n < min_n ) n = min_n;
-	const f = (translationZ + 1.74);
+	const f = (translationZ + boxDepthRadius);
 	const fov = Math.PI * fov_angle / 180;
 	const s = 1 / Math.tan(fov / 2);
+	// const perspectiveProjectionMatrix = [
+	// 	s, 0, 0, 0,
+	// 	0, s, 0, 0,
+	// 	0, 0, - f / (f - n), - f * n / (f - n),
+	// 	0, 0, -1, 0,
+	// ];
+	// const windowTransform = [
+	// 	canvas.width / 2, 0, (canvas.width - 1) / 2
+	// ]
 	return MatrixMult([
 		s/ratio, 0, 0, 0,
 		0, s, 0, 0,
 		0, 0, (n+f)/(f-n), 1,
 		0, 0, -2*n*f/(f-n), 0
-	], cameraDirectionTransform(camRotX, camRotY));
+	], cameraDirectionTransform(camRotX, camRotY, translationZ));
 }
 
 // Devuelve la matriz de perspectiva (column-major)
@@ -110,7 +125,7 @@ function DrawScene()
 
 	meshDrawers.forEach(meshDrawer => {
 		// 1. Obtenemos las matrices de transformación
-		var mv  = GetModelViewMatrix( meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2] + transZ, 0/*rotX*/, autorot /*+rotY*/);
+		var mv  = GetModelViewMatrix( meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2] + 3/*+ transZ*/, 0/*rotX*/, autorot /*+rotY*/);
 		var mvp = MatrixMult( perspectiveMatrix, mv );
 
 		// 3. Le pedimos a cada objeto que se dibuje a si mismo

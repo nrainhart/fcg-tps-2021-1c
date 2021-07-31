@@ -3,7 +3,7 @@ var meshDrawers;         // clase para contener el comportamiento de la malla
 var canvas, gl;         // canvas y contexto WebGL
 var perspectiveMatrix;	// matriz de perspectiva
 
-var rotX=0, rotY=0, transZ=3, autorot=0;
+var camRotX=0, camRotY=0, rotX=0, rotY=0, transZ=3, autorot=0;
 
 // Funcion de inicialización, se llama al cargar la página
 function InitWebGL()
@@ -53,28 +53,53 @@ function UpdateCanvasSize()
 	UpdateProjectionMatrix();
 }
 
+function cameraDirectionTransform(camRotX, camRotY) {
+	const matRotX = [
+		[1, 0, 0, 0],
+		[0, Math.cos(camRotX), -Math.sin(camRotX), 0],
+		[0, Math.sin(camRotX), Math.cos(camRotX), 0],
+		[0, 0, 0, 1]
+	];
+	const matRotY = [
+		[Math.cos(camRotY), 0, Math.sin(camRotY), 0],
+		[0, 1, 0, 0],
+		[-Math.sin(camRotY), 0, Math.cos(camRotY), 0],
+		[0, 0, 0, 1]
+	];
+	const rotateXY = (vector) => math.multiply(matRotY, math.multiply(matRotX, vector));
+	const u = rotateXY([1, 0, 0, 0]);
+	const v = rotateXY([0, 1, 0, 0]);
+	const w = rotateXY([0, 0, 1, 0]);
+	return [
+		u[0], v[0], w[0], 0,
+		u[1], v[1], w[1], 0,
+		u[2], v[2], w[2], 0,
+		0, 0, 0, 1,
+	];
+}
+
 // Calcula la matriz de perspectiva (column-major)
-function ProjectionMatrix( c, z, fov_angle=60 )
+function ProjectionMatrix( canvas, translationZ, fov_angle=60, camRotX, camRotY )
 {
-	var r = c.width / c.height;
-	var n = (z - 1.74);
+	const ratio = canvas.width / canvas.height;
+	let n = (translationZ - 1.74);
 	const min_n = 0.001;
 	if ( n < min_n ) n = min_n;
-	var f = (z + 1.74);;
-	var fov = 3.145 * fov_angle / 180;
-	var s = 1 / Math.tan( fov/2 );
-	return [
-		s/r, 0, 0, 0,
+	const f = (translationZ + 1.74);
+	const fov = Math.PI * fov_angle / 180;
+	const s = 1 / Math.tan(fov / 2);
+	return MatrixMult([
+		s/ratio, 0, 0, 0,
 		0, s, 0, 0,
 		0, 0, (n+f)/(f-n), 1,
 		0, 0, -2*n*f/(f-n), 0
-	];
+	], cameraDirectionTransform(camRotX, camRotY));
 }
 
 // Devuelve la matriz de perspectiva (column-major)
 function UpdateProjectionMatrix()
 {
-	perspectiveMatrix = ProjectionMatrix( canvas, transZ );
+	perspectiveMatrix = ProjectionMatrix( canvas, transZ, undefined, camRotX, camRotY );
 }
 
 // Funcion que reenderiza la escena. 
@@ -85,7 +110,7 @@ function DrawScene()
 
 	meshDrawers.forEach(meshDrawer => {
 		// 1. Obtenemos las matrices de transformación
-		var mv  = GetModelViewMatrix( meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], transZ, rotX, autorot+rotY );
+		var mv  = GetModelViewMatrix( meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2] + transZ, 0/*rotX*/, autorot /*+rotY*/);
 		var mvp = MatrixMult( perspectiveMatrix, mv );
 
 		// 3. Le pedimos a cada objeto que se dibuje a si mismo
@@ -171,39 +196,28 @@ window.onload = function()
 	lightView = new LightView();
 
 	// Evento de zoom (ruedita)
-	canvas.zoom = function( s ) 
-	{
+	const zoom = function(s) {
 		transZ *= s/canvas.height + 1;
 		UpdateProjectionMatrix();
 		DrawScene();
 	}
-	canvas.onwheel = function() { canvas.zoom(0.3*event.deltaY); }
+	canvas.onwheel = function() { zoom(0.3*event.deltaY); }
 
 	// Evento de click 
 	canvas.onmousedown = function() 
 	{
 		var cx = event.clientX;
 		var cy = event.clientY;
-		if ( event.ctrlKey ) 
-		{
-			canvas.onmousemove = function() 
-			{
-				canvas.zoom(5*(event.clientY - cy));
-				cy = event.clientY;
-			}
-		}
-		else 
-		{   
-			// Si se mueve el mouse, actualizo las matrices de rotación
-			canvas.onmousemove = function() 
-			{
-				rotY += (cx - event.clientX)/canvas.width*5;
-				rotX += (cy - event.clientY)/canvas.height*5;
-				cx = event.clientX;
-				cy = event.clientY;
-				UpdateProjectionMatrix();
-				DrawScene();
-			}
+		// Si se mueve el mouse, actualizo las matrices de rotación
+		canvas.onmousemove = function() {
+			rotY += (cx - event.clientX)/canvas.width*5;
+			rotX += (cy - event.clientY)/canvas.height*5;
+			camRotX = rotX;
+			camRotY = rotY;
+			cx = event.clientX;
+			cy = event.clientY;
+			UpdateProjectionMatrix();
+			DrawScene();
 		}
 	}
 

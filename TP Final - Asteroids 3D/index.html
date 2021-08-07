@@ -26,8 +26,8 @@
             <div class="control"><span id="shininess-label">Intensidad:</span><span id="shininess-value">1</span><input id="shininess-exp" type="range" min="0" max="100" value="50" oninput="SetShininess(this)"/></div>
         </div>
         <div class="control-group">
-            <div class="control">Modelo:<br/><input id="obj" type="file" onchange="LoadObj(this)" accept=".obj"/></div>
-            <div class="control">Textura:<br/><input id="texture" type="file" onchange="LoadTexture(this)" accept="image/*"/></div>
+            <div class="control">Modelo:<br/><input id="obj" type="file" onchange="LoadObjFromInput(this)" accept=".obj"/></div>
+            <div class="control">Textura:<br/><input id="texture" type="file" onchange="LoadTextureFromInput(this)" accept="image/*"/></div>
         </div>
         <div class="control-group">
             <img id="texture-img" />

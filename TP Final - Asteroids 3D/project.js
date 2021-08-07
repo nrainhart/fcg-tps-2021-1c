@@ -23,7 +23,17 @@ function InitWebGL() {
     gl.enable(gl.DEPTH_TEST); // habilitar test de profundidad
 
     // Inicializar los shaders y buffers para renderizar
-    meshDrawers = [new MeshDrawer([0, 0, 0]), new MeshDrawer([1, 1, 1])];
+    const coords = [];
+    for (let i=0; i<2; i++) {
+        for (let j=0; j<2; j++) {
+            for (let k=0; k<2; k++) {
+                coords.push([i*10, j*10, k*10]);
+            }
+        }
+    }
+    meshDrawers = coords.map(coord => new MeshDrawer(coord));
+    LoadObj(loadFile('./models/asteroid.obj'));
+    LoadTexture('./models/asteroid.jpg');
 
     // Setear el tamaño del viewport
     UpdateCanvasSize();
@@ -270,46 +280,68 @@ function ShowTexture(param) {
     DrawScene();
 }
 
+function loadFile(filePath) {
+    var result = null;
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", filePath, false);
+    xmlhttp.send();
+    if (xmlhttp.status===200) {
+        result = xmlhttp.responseText;
+    }
+    return result;
+}
+
+function LoadObj(objData) {
+    var mesh = new ObjMesh;
+    mesh.parse(objData);
+    var box = mesh.getBoundingBox();
+    var shift = [
+        -(box.min[0] + box.max[0]) / 2,
+        -(box.min[1] + box.max[1]) / 2,
+        -(box.min[2] + box.max[2]) / 2
+    ];
+    var size = [
+        (box.max[0] - box.min[0]) / 2,
+        (box.max[1] - box.min[1]) / 2,
+        (box.max[2] - box.min[2]) / 2
+    ];
+    var maxSize = Math.max(size[0], size[1], size[2]);
+    var scale = 1 / maxSize;
+    mesh.shiftAndScale(shift, scale);
+    var buffers = mesh.getVertexBuffers();
+    meshDrawers.forEach(meshDrawer => meshDrawer.setMesh(buffers.positionBuffer, buffers.texCoordBuffer, buffers.normalBuffer));
+}
+
 // Cargar archivo obj
-function LoadObj(param) {
-    if (param.files && param.files[0]) {
+function LoadObjFromInput(param) {
+    let file = param.files && param.files[0];
+    if (file) {
         var reader = new FileReader();
         reader.onload = function (e) {
-            var mesh = new ObjMesh;
-            mesh.parse(e.target.result);
-            var box = mesh.getBoundingBox();
-            var shift = [
-                -(box.min[0] + box.max[0]) / 2,
-                -(box.min[1] + box.max[1]) / 2,
-                -(box.min[2] + box.max[2]) / 2
-            ];
-            var size = [
-                (box.max[0] - box.min[0]) / 2,
-                (box.max[1] - box.min[1]) / 2,
-                (box.max[2] - box.min[2]) / 2
-            ];
-            var maxSize = Math.max(size[0], size[1], size[2]);
-            var scale = 1 / maxSize;
-            mesh.shiftAndScale(shift, scale);
-            var buffers = mesh.getVertexBuffers();
-            meshDrawers.forEach(meshDrawer => meshDrawer.setMesh(buffers.positionBuffer, buffers.texCoordBuffer, buffers.normalBuffer));
+            let objData = e.target.result;
+            LoadObj(objData);
             DrawScene();
         }
-        reader.readAsText(param.files[0]);
+        reader.readAsText(file);
     }
 }
 
+function LoadTexture(src) {
+    var img = document.getElementById('texture-img');
+    img.onload = function () {
+        meshDrawers.forEach(meshDrawer => meshDrawer.setTexture(img));
+        DrawScene();
+    }
+    img.src = src;
+}
+
 // Cargar textura
-function LoadTexture(param) {
+function LoadTextureFromInput(param) {
     if (param.files && param.files[0]) {
         var reader = new FileReader();
         reader.onload = function (e) {
-            var img = document.getElementById('texture-img');
-            img.onload = function () {
-                meshDrawers.forEach(meshDrawer => meshDrawer.setTexture(img));
-                DrawScene();
-            }
-            img.src = e.target.result;
+            let src = e.target.result;
+            LoadTexture(src);
         };
         reader.readAsDataURL(param.files[0]);
     }

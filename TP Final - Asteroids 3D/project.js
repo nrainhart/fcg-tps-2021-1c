@@ -209,7 +209,7 @@ window.onload = function () {
 
     // Evento de zoom (ruedita)
     const zoom = function (s) {
-        transZ *= s / canvas.height + 1;
+        transZ += s * 0.1;
         UpdateProjectionMatrix();
         DrawScene();
     }

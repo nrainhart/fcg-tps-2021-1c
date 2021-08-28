@@ -1,9 +1,10 @@
 // Estructuras globales e inicializaciones
-var meshDrawers;         // clase para contener el comportamiento de la malla
-var canvas, gl;         // canvas y contexto WebGL
-var perspectiveMatrix;	// matriz de perspectiva
+let meshDrawers;         // clase para contener el comportamiento de la malla
+let canvas, gl;         // canvas y contexto WebGL
+let perspectiveMatrix;	// matriz de perspectiva
 
-var camRotX = 0, camRotY = 0, rotX = 0, rotY = 0, transZ = 3, autorot = 0;
+let cameraPosition = [0, 0, 0]
+let camRotX = 0, camRotY = 0, rotX = 0, rotY = 0, autorot = 0;
 
 // Funcion de inicialización, se llama al cargar la página
 function InitWebGL() {
@@ -62,7 +63,7 @@ function UpdateCanvasSize() {
     UpdateProjectionMatrix();
 }
 
-function cameraDirectionTransform(camRotX, camRotY, translationZ) {
+function CameraTransform(translation) {
     const matRotX = [
         [1, 0, 0, 0],
         [0, Math.cos(camRotX), -Math.sin(camRotX), 0],
@@ -79,6 +80,9 @@ function cameraDirectionTransform(camRotX, camRotY, translationZ) {
     const u = rotateXY([1, 0, 0, 0]);
     const v = rotateXY([0, 1, 0, 0]);
     const w = rotateXY([0, 0, 1, 0]);
+    for (let i = 0; i < 3; i++) {
+        cameraPosition[i] -= translation * w[i];
+    }
     return MatrixMult([
         u[0], v[0], w[0], 0,
         u[1], v[1], w[1], 0,
@@ -88,40 +92,35 @@ function cameraDirectionTransform(camRotX, camRotY, translationZ) {
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
-        -translationZ * w[0], -translationZ * w[1], -translationZ * w[2], 1,
+        -cameraPosition[0], -cameraPosition[1], -cameraPosition[2], 1,
     ]);
 }
 
 // Calcula la matriz de perspectiva (column-major)
-function ProjectionMatrix(canvas, translationZ, fov_angle = 60, camRotX, camRotY) {
+function ProjectionMatrix(canvas, translation, fov_angle = 60) {
+    // Hacemos esto primero porque `CameraTransform` actualiza la traslación en z de la cámara (cameraPosition[2])
+    // que se usa más abajo
+    const cameraTransform = CameraTransform(translation);
+
     const ratio = canvas.width / canvas.height;
     let boxDepthRadius = 100//1.74;
-    let n = (translationZ - boxDepthRadius);
+    let n = (cameraPosition[2] - boxDepthRadius);
     const min_n = 0.001;
     if (n < min_n) n = min_n;
-    const f = (translationZ + boxDepthRadius);
+    const f = (cameraPosition[2] + boxDepthRadius);
     const fov = Math.PI * fov_angle / 180;
     const s = 1 / Math.tan(fov / 2);
-    // const perspectiveProjectionMatrix = [
-    // 	s, 0, 0, 0,
-    // 	0, s, 0, 0,
-    // 	0, 0, - f / (f - n), - f * n / (f - n),
-    // 	0, 0, -1, 0,
-    // ];
-    // const windowTransform = [
-    // 	canvas.width / 2, 0, (canvas.width - 1) / 2
-    // ]
     return MatrixMult([
         s / ratio, 0, 0, 0,
         0, s, 0, 0,
         0, 0, (n + f) / (f - n), 1,
         0, 0, -2 * n * f / (f - n), 0
-    ], cameraDirectionTransform(camRotX, camRotY, translationZ));
+    ], cameraTransform);
 }
 
 // Devuelve la matriz de perspectiva (column-major)
-function UpdateProjectionMatrix() {
-    perspectiveMatrix = ProjectionMatrix(canvas, transZ, undefined, camRotX, camRotY);
+function UpdateProjectionMatrix(translation = 0) {
+    perspectiveMatrix = ProjectionMatrix(canvas, translation, undefined, camRotX, camRotY);
 }
 
 // Funcion que reenderiza la escena. 
@@ -209,8 +208,7 @@ window.onload = function () {
 
     // Evento de zoom (ruedita)
     const zoom = function (s) {
-        transZ += s * 0.1;
-        UpdateProjectionMatrix();
+        UpdateProjectionMatrix(s * 0.1);
         DrawScene();
     }
     canvas.onwheel = function () {

@@ -22,7 +22,7 @@ class LightView {
 
         this.rotX = 0;
         this.rotY = 0;
-        this.posZ = 5;
+        this.posZ = 0;
 
         this.resCircle = 32;
         this.resArrow = 16;
@@ -96,7 +96,7 @@ class LightView {
         this.canvas.style.height = height + 'px';
 
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-        this.proj = ProjectionMatrix(this.canvas, this.posZ, 30);
+        this.proj = ProjectionMatrix(this.canvas, 0, 30);
 
         // Compilamos los shaders
         this.prog = InitShaderProgram(lightViewVS, lightViewFS, this.gl);

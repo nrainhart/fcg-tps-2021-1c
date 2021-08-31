@@ -10,9 +10,6 @@ let camRotX = 0, camRotY = 0, rotX = 0, rotY = 0, autorot = 0;
 function InitWebGL() {
     // Inicializamos el canvas WebGL
     canvas = document.getElementById("canvas");
-    canvas.oncontextmenu = function () {
-        return false;
-    };
     gl = canvas.getContext("webgl", {antialias: false, depth: true});
     if (!gl) {
         alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
@@ -206,36 +203,16 @@ window.onload = function () {
     // Componente para la luz
     lightView = new LightView();
 
+    canvas.onclick = canvas.requestPointerLock;
+    document.addEventListener('pointerlockchange', lockChangeAlert, false);
+    canvas.oncontextmenu = () => false;
+
     // Evento de zoom (ruedita)
-    const zoom = function (s) {
+    const zoom = s => {
         UpdateProjectionMatrix(s * 0.1);
         DrawScene();
     }
-    canvas.onwheel = function () {
-        zoom(0.3 * event.deltaY);
-    }
-
-    // Evento de click
-    canvas.onmousedown = function () {
-        var cx = event.clientX;
-        var cy = event.clientY;
-        // Si se mueve el mouse, actualizo las matrices de rotación
-        canvas.onmousemove = function () {
-            rotY += (cx - event.clientX) / canvas.width * 5;
-            rotX += (cy - event.clientY) / canvas.height * 5;
-            camRotX = rotX;
-            camRotY = rotY;
-            cx = event.clientX;
-            cy = event.clientY;
-            UpdateProjectionMatrix();
-            DrawScene();
-        }
-    }
-
-    // Evento soltar el mouse
-    canvas.onmouseup = canvas.onmouseleave = function () {
-        canvas.onmousemove = null;
-    }
+    canvas.onwheel = () => zoom(0.3 * event.deltaY);
 
     SetShininess(document.getElementById('shininess-exp'));
 
@@ -247,6 +224,24 @@ window.onload = function () {
 function WindowResize() {
     UpdateCanvasSize();
     DrawScene();
+}
+
+const updatePosition = () => {
+    // Si se mueve el mouse, actualizo las matrices de rotación
+    rotY += event.movementX / canvas.width*5;
+    rotX += event.movementY / canvas.height*5;
+    camRotX = rotX;
+    camRotY = rotY;
+    UpdateProjectionMatrix();
+    DrawScene();
+}
+
+const lockChangeAlert = () => {
+    if (document.pointerLockElement === canvas) {
+        document.addEventListener("mousemove", updatePosition, false);
+    } else {
+        document.removeEventListener("mousemove", updatePosition, false);
+    }
 }
 
 // Control de la calesita de rotación

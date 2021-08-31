@@ -212,6 +212,11 @@ window.onload = function () {
         UpdateProjectionMatrix(s * 0.1);
         DrawScene();
     }
+    const animate = () => requestAnimationFrame(() => {
+        zoom(-0.8);
+        animate();
+    });
+    animate();
     canvas.onwheel = () => zoom(0.3 * event.deltaY);
 
     SetShininess(document.getElementById('shininess-exp'));

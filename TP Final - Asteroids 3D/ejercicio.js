@@ -74,7 +74,10 @@ class MeshDrawer {
     // componen de a tres elementos consecutivos en el arreglo vertPos [x0,y0,z0,x1,y1,z1,..] y normals
     // [n0,n0,n0,n1,n1,n1,...]. De manera similar, las coordenadas de textura se componen de a 2 elementos consecutivos y
     // se  asocian a cada vértice en orden.
-    setMesh(vertPos, texCoords, normals) {
+    setMesh(mesh) {
+        this.mesh = mesh;
+        const buffers = mesh.getVertexBuffers();
+        const { positionBuffer: vertPos, texCoordBuffer: texCoords, normalBuffer: normals } = buffers;
         this.numTriangles = vertPos.length / 3 / 3;
         this._setBufferData(this.vertbuffer, vertPos);
         this._setBufferData(this.texPosbuffer, texCoords);
@@ -84,6 +87,11 @@ class MeshDrawer {
     _setBufferData(buffer, vertPos) {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
+    }
+
+    getBoundingBox() {
+        const { min, max } = this.mesh.getBoundingBox();
+        return new BoundingBox(addPoints(min, this.initialPosition), addPoints(max, this.initialPosition));
     }
 
     // Esta función se llama para dibujar la malla de triángulos. El argumento es la matriz model-view-projection
@@ -151,6 +159,8 @@ class MeshDrawer {
         gl.uniform1f(this.shininessLocation, shininess);
     }
 }
+
+const addPoints = (aPoint, anotherPoint) => [aPoint[0] + anotherPoint[0], aPoint[1] + anotherPoint[1], aPoint[2] + anotherPoint[2]];
 
 var meshVS = `
 	attribute vec3 pos;

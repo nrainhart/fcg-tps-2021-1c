@@ -6,6 +6,10 @@ let perspectiveMatrix;	// matriz de perspectiva
 let cameraPosition = [0, 0, 0]
 let camRotX = 0, camRotY = 0, rotX = 0, rotY = 0, autorot = 0;
 
+// Por ahora usamos bounding boxes para aproximar el volumen de los asteroides. En el futuro capaz queramos
+// "bounding spheres" para que sea un poco más preciso.
+const meshBoundingBoxes = () => meshDrawers.map(meshDrawer => meshDrawer.getBoundingBox());
+
 // Funcion de inicialización, se llama al cargar la página
 function InitWebGL() {
     // Inicializamos el canvas WebGL
@@ -93,11 +97,20 @@ function CameraTransform(translation) {
     ]);
 }
 
+let collisionCounter = 0;
+
 // Calcula la matriz de perspectiva (column-major)
 function ProjectionMatrix(canvas, translation, fov_angle = 60) {
     // Hacemos esto primero porque `CameraTransform` actualiza la traslación en z de la cámara (cameraPosition[2])
     // que se usa más abajo
     const cameraTransform = CameraTransform(translation);
+
+    const asteroidCollision = meshBoundingBoxes().some(meshBbox => meshBbox.contains(cameraPosition));
+    if (asteroidCollision) {
+        // TODO hacer algo con esto :P
+        console.log({ cameraPosition, counter: collisionCounter });
+        collisionCounter++;
+    }
 
     const ratio = canvas.width / canvas.height;
     let boxDepthRadius = 100//1.74;
@@ -127,7 +140,7 @@ function DrawScene() {
 
     meshDrawers.forEach(meshDrawer => {
         // 1. Obtenemos las matrices de transformación
-        var mv = GetModelViewMatrix(meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2] + 3/*+ transZ*/, 0/*rotX*/, autorot /*+rotY*/);
+        var mv = GetModelViewMatrix(meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2], 0/*rotX*/, autorot /*+rotY*/);
         var mvp = MatrixMult(perspectiveMatrix, mv);
 
         // 3. Le pedimos a cada objeto que se dibuje a si mismo
@@ -255,13 +268,13 @@ var timer;
 function AutoRotate(param) {
     // Si hay que girar...
     if (param.checked) {
-        // Vamos rotando una cantiad constante cada 30 ms
+        // Vamos rotando una cantidad constante cada 30 ms
         timer = setInterval(function () {
                 var v = document.getElementById('rotation-speed').value;
                 autorot += 0.0005 * v;
                 if (autorot > 2 * Math.PI) autorot -= 2 * Math.PI;
 
-                // Reenderizamos
+                // Renderizamos
                 DrawScene();
             }, 30
         );
@@ -290,24 +303,23 @@ function loadFile(filePath) {
 }
 
 function LoadObj(objData) {
-    var mesh = new ObjMesh;
+    const mesh = new ObjMesh;
     mesh.parse(objData);
-    var box = mesh.getBoundingBox();
-    var shift = [
+    const box = mesh.getBoundingBox();
+    const shift = [
         -(box.min[0] + box.max[0]) / 2,
         -(box.min[1] + box.max[1]) / 2,
         -(box.min[2] + box.max[2]) / 2
     ];
-    var size = [
+    const size = [
         (box.max[0] - box.min[0]) / 2,
         (box.max[1] - box.min[1]) / 2,
         (box.max[2] - box.min[2]) / 2
     ];
-    var maxSize = Math.max(size[0], size[1], size[2]);
-    var scale = 1 / maxSize;
+    const maxSize = Math.max(size[0], size[1], size[2]);
+    const scale = 1 / maxSize;
     mesh.shiftAndScale(shift, scale);
-    var buffers = mesh.getVertexBuffers();
-    meshDrawers.forEach(meshDrawer => meshDrawer.setMesh(buffers.positionBuffer, buffers.texCoordBuffer, buffers.normalBuffer));
+    meshDrawers.forEach(meshDrawer => meshDrawer.setMesh(mesh));
 }
 
 // Cargar archivo obj

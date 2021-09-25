@@ -198,15 +198,15 @@ var meshFS = `
 	void main() {
 		vec3 normal = normalize(mn * normCoord);
 		float cosTita = max(0.0, dot(normal,lightDir));
-		
+
 		vec4 v = -1.0*(mv*vertCoord);
 		vec4 r = vec4(2.0*dot(lightDir, normCoord)*normCoord - lightDir, 1);
 		float cosDelta = max(0.0, dot(v,r));
-		
+
 		vec4 kd = useTexture ? texture2D(texGPU, texCoord) : vec4(1.0,0.0,gl_FragCoord.z*gl_FragCoord.z,1.0);
 		vec4 i = vec4(1.0, 1.0, 1.0, 1.0);
-		vec4 ks = vec4(1.0, 1.0, 1.0, 1.0);
-		
-		gl_FragColor = cosTita * i * (kd + (pow(cosTita, shininess)*ks)/cosTita) + 0.01 * kd;
+		vec4 ks = vec4(0.5, 0.5, 0.5, 1);
+
+		gl_FragColor = max(cosTita * i * (kd + (pow(cosTita, shininess)*ks)/cosTita) + 0.01 * kd, 0.25 * kd);
 	}
 `;

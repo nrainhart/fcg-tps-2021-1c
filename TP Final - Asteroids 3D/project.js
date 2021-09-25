@@ -225,8 +225,18 @@ window.onload = function () {
         UpdateProjectionMatrix(s * 0.1);
         DrawScene();
     }
+
+    // Para avanzar/parar
+    let moving = false;
+    window.onkeydown = (e) => {
+        if (e.key === ' ') {
+            moving = !moving;
+        }
+    };
     const animate = () => requestAnimationFrame(() => {
-        zoom(-0.8);
+        if (moving) {
+            zoom(-0.8);
+        }
         animate();
     });
     animate();

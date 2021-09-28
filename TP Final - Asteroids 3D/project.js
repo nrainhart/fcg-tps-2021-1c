@@ -4,7 +4,7 @@ let canvas, gl;         // canvas y contexto WebGL
 let perspectiveMatrix;	// matriz de perspectiva
 
 let cameraPosition = [0, 0, 0]
-let camRotX = 0, camRotY = 0, rotX = 0, rotY = 0, autorot = 0;
+let camRotX = 0, camRotY = 0, autorot = 0;
 
 // Por ahora usamos bounding boxes para aproximar el volumen de los asteroides. En el futuro capaz queramos
 // "bounding spheres" para que sea un poco más preciso.
@@ -113,7 +113,7 @@ function ProjectionMatrix(canvas, translation, fov_angle = 60) {
     }
 
     const ratio = canvas.width / canvas.height;
-    let boxDepthRadius = 100//1.74;
+    let boxDepthRadius = 100;
     let n = (cameraPosition[2] - boxDepthRadius);
     const min_n = 0.001;
     if (n < min_n) n = min_n;
@@ -130,17 +130,17 @@ function ProjectionMatrix(canvas, translation, fov_angle = 60) {
 
 // Devuelve la matriz de perspectiva (column-major)
 function UpdateProjectionMatrix(translation = 0) {
-    perspectiveMatrix = ProjectionMatrix(canvas, translation, undefined, camRotX, camRotY);
+    perspectiveMatrix = ProjectionMatrix(canvas, translation);
 }
 
-// Funcion que reenderiza la escena. 
+// Funcion que renderiza la escena.
 function DrawScene() {
     // 2. Limpiamos la escena
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     meshDrawers.forEach(meshDrawer => {
         // 1. Obtenemos las matrices de transformación
-        var mv = GetModelViewMatrix(meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2], 0/*rotX*/, autorot /*+rotY*/);
+        var mv = GetModelViewMatrix(meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2], 0, autorot);
         var mvp = MatrixMult(perspectiveMatrix, mv);
 
         // 3. Le pedimos a cada objeto que se dibuje a si mismo
@@ -256,10 +256,8 @@ function WindowResize() {
 
 const updatePosition = () => {
     // Si se mueve el mouse, actualizo las matrices de rotación
-    rotY += event.movementX / canvas.width*5;
-    rotX += event.movementY / canvas.height*5;
-    camRotX = rotX;
-    camRotY = rotY;
+    camRotX += event.movementY / canvas.height*5;
+    camRotY += event.movementX / canvas.width*5;
     UpdateProjectionMatrix();
     DrawScene();
 }

@@ -4,7 +4,10 @@ let canvas, gl;         // canvas y contexto WebGL
 let perspectiveMatrix;	// matriz de perspectiva
 
 let cameraPosition = [0, 0, 0]
-let camRotX = 0, camRotY = 0, autorot = 0;
+let camera_u = [1, 0, 0, 0];
+let camera_v = [0, 1, 0, 0];
+let camera_w = [0, 0, 1, 0];
+let autorot = 0;
 
 // Por ahora usamos bounding boxes para aproximar el volumen de los asteroides. En el futuro capaz queramos
 // "bounding spheres" para que sea un poco más preciso.
@@ -64,30 +67,33 @@ function UpdateCanvasSize() {
     UpdateProjectionMatrix();
 }
 
-function CameraTransform(translation) {
-    const matRotX = [
-        [1, 0, 0, 0],
-        [0, Math.cos(camRotX), -Math.sin(camRotX), 0],
-        [0, Math.sin(camRotX), Math.cos(camRotX), 0],
+function RotationMatrix(angle, axis) {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const [x, y, z] = axis;
+    const x2 = x * x, y2 = y * y, z2 = z * z;
+    return [
+        [cos + x2 * (1 - cos), y * x * (1 - cos) + z * sin, z * x * (1 - cos) - y * sin, 0],
+        [x * y * (1 - cos) - z * sin, cos + y2 * (1 - cos), z * y * (1 - cos) + x * sin, 0],
+        [x * z * (1 - cos) + y * sin, y * z * (1 - cos) - x * sin, cos + z2 * (1 - cos), 0],
         [0, 0, 0, 1]
-    ];
-    const matRotY = [
-        [Math.cos(camRotY), 0, Math.sin(camRotY), 0],
-        [0, 1, 0, 0],
-        [-Math.sin(camRotY), 0, Math.cos(camRotY), 0],
-        [0, 0, 0, 1]
-    ];
-    const rotateXY = (vector) => math.multiply(matRotY, math.multiply(matRotX, vector));
-    const u = rotateXY([1, 0, 0, 0]);
-    const v = rotateXY([0, 1, 0, 0]);
-    const w = rotateXY([0, 0, 1, 0]);
+    ]
+}
+
+function CameraTransform(translation, rotX, rotY) {
+    const rotateX = (vector) => math.multiply(RotationMatrix(rotX, math.multiply(-1, camera_u)), vector);
+    const rotateY = (vector) => math.multiply(RotationMatrix(rotY, math.multiply(-1, camera_v)), vector);
+    const rotateXY = (vector) => rotateX(rotateY(vector));
+    camera_u = rotateXY(camera_u);
+    camera_v = rotateXY(camera_v);
+    camera_w = rotateXY(camera_w);
     for (let i = 0; i < 3; i++) {
-        cameraPosition[i] -= translation * w[i];
+        cameraPosition[i] -= translation * camera_w[i];
     }
     return MatrixMult([
-        u[0], v[0], w[0], 0,
-        u[1], v[1], w[1], 0,
-        u[2], v[2], w[2], 0,
+        camera_u[0], camera_v[0], camera_w[0], 0,
+        camera_u[1], camera_v[1], camera_w[1], 0,
+        camera_u[2], camera_v[2], camera_w[2], 0,
         0, 0, 0, 1,
     ], [
         1, 0, 0, 0,
@@ -100,10 +106,10 @@ function CameraTransform(translation) {
 let collisionCounter = 0;
 
 // Calcula la matriz de perspectiva (column-major)
-function ProjectionMatrix(canvas, translation, fov_angle = 60) {
+function ProjectionMatrix(canvas, translation, rotX = 0, rotY = 0, fov_angle = 60) {
     // Hacemos esto primero porque `CameraTransform` actualiza la traslación en z de la cámara (cameraPosition[2])
     // que se usa más abajo
-    const cameraTransform = CameraTransform(translation);
+    const cameraTransform = CameraTransform(translation, rotX, rotY);
 
     const asteroidCollision = meshBoundingBoxes().some(meshBbox => meshBbox.contains(cameraPosition));
     if (asteroidCollision) {
@@ -129,8 +135,8 @@ function ProjectionMatrix(canvas, translation, fov_angle = 60) {
 }
 
 // Devuelve la matriz de perspectiva (column-major)
-function UpdateProjectionMatrix(translation = 0) {
-    perspectiveMatrix = ProjectionMatrix(canvas, translation);
+function UpdateProjectionMatrix(translation = 0, rotX = 0, rotY = 0) {
+    perspectiveMatrix = ProjectionMatrix(canvas, translation, rotX, rotY);
 }
 
 // Funcion que renderiza la escena.
@@ -256,9 +262,9 @@ function WindowResize() {
 
 const updatePosition = () => {
     // Si se mueve el mouse, actualizo las matrices de rotación
-    camRotX += event.movementY / canvas.height*5;
-    camRotY += event.movementX / canvas.width*5;
-    UpdateProjectionMatrix();
+    const rotX = event.movementY / canvas.height*5;
+    const rotY = event.movementX / canvas.width*5;
+    UpdateProjectionMatrix(0, rotX, rotY);
     DrawScene();
 }
 

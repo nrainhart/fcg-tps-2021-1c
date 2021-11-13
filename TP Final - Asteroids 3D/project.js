@@ -29,10 +29,10 @@ function InitWebGL() {
 
     // Inicializar los shaders y buffers para renderizar
     const coords = [];
-    for (let i=0; i<2; i++) {
-        for (let j=0; j<2; j++) {
-            for (let k=0; k<2; k++) {
-                coords.push([i*10, j*10, k*10]);
+    for (let i = 0; i < 2; i++) {
+        for (let j = 0; j < 2; j++) {
+            for (let k = 0; k < 2; k++) {
+                coords.push([i * 10, j * 10, k * 10]);
             }
         }
     }
@@ -80,10 +80,14 @@ function RotationMatrix(angle, axis) {
     ]
 }
 
+function NormalizeVector(vector) {
+    return math.multiply(1 / math.norm(vector), vector)
+}
+
 function CameraTransform(translation, rotX, rotY) {
-    const rotateX = (vector) => math.multiply(RotationMatrix(rotX, math.multiply(-1, camera_u)), vector);
-    const rotateY = (vector) => math.multiply(RotationMatrix(rotY, math.multiply(-1, camera_v)), vector);
-    const rotateXY = (vector) => rotateX(rotateY(vector));
+    let rotationMatrixX = RotationMatrix(rotX, math.multiply(-1, camera_u));
+    let rotationMatrixY = RotationMatrix(rotY, math.multiply(-1, camera_v));
+    const rotateXY = (vector) => NormalizeVector(math.multiply(rotationMatrixX, math.multiply(rotationMatrixY, vector)));
     camera_u = rotateXY(camera_u);
     camera_v = rotateXY(camera_v);
     camera_w = rotateXY(camera_w);
@@ -262,8 +266,8 @@ function WindowResize() {
 
 const updatePosition = () => {
     // Si se mueve el mouse, actualizo las matrices de rotación
-    const rotX = event.movementY / canvas.height*5;
-    const rotY = event.movementX / canvas.width*5;
+    const rotX = event.movementY / canvas.height * 5;
+    const rotY = event.movementX / canvas.width * 5;
     UpdateProjectionMatrix(0, rotX, rotY);
     DrawScene();
 }
@@ -310,7 +314,7 @@ function loadFile(filePath) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.open("GET", filePath, false);
     xmlhttp.send();
-    if (xmlhttp.status===200) {
+    if (xmlhttp.status === 200) {
         result = xmlhttp.responseText;
     }
     return result;

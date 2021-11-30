@@ -76,6 +76,18 @@ input[type=range] {
     width: 4em;
 }
 
+#kaboom {
+    position: absolute;
+    inset: 0;
+    background: url("kaboom.png") no-repeat center center;
+    z-index: 99;
+    display: none;
+}
+
+#kaboom.visible {
+    display: block;
+}
+
 @media (orientation: landscape) {
     #canvas-div {
         display: inline-block;

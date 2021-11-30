@@ -29,10 +29,14 @@ function InitWebGL() {
 
     // Inicializar los shaders y buffers para renderizar
     const coords = [];
-    for (let i = 0; i < 2; i++) {
-        for (let j = 0; j < 2; j++) {
-            for (let k = 0; k < 2; k++) {
-                coords.push([i * 10, j * 10, k * 10]);
+    for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+            for (let k = 0; k < 5; k++) {
+                coords.push([
+                    i * 10 + 5 * Math.random(),
+                    j * 10 + 5 * Math.random(),
+                    k * 10 + 5 * Math.random()
+                ]);
             }
         }
     }
@@ -107,20 +111,22 @@ function CameraTransform(translation, rotX, rotY) {
     ]);
 }
 
-let collisionCounter = 0;
+let kaboom;
 
 // Calcula la matriz de perspectiva (column-major)
 function ProjectionMatrix(canvas, translation, rotX = 0, rotY = 0, fov_angle = 60) {
+
+    let offsetCameraPosition = math.add(cameraPosition, math.multiply(camera_w.slice(0, 3), -10 * translation));
+    const collidingAsteroidIndex = meshDrawers.findIndex(meshDrawer => meshDrawer.getBoundingBox().contains(offsetCameraPosition));
+    if (collidingAsteroidIndex !== -1) {
+        kaboom.classList.add('visible')
+        setTimeout(() => kaboom.classList.remove('visible'), 200)
+        meshDrawers.splice(collidingAsteroidIndex, 1);
+    }
+
     // Hacemos esto primero porque `CameraTransform` actualiza la traslación en z de la cámara (cameraPosition[2])
     // que se usa más abajo
     const cameraTransform = CameraTransform(translation, rotX, rotY);
-
-    const asteroidCollision = meshBoundingBoxes().some(meshBbox => meshBbox.contains(cameraPosition));
-    if (asteroidCollision) {
-        // TODO hacer algo con esto :P
-        console.log({ cameraPosition, counter: collisionCounter });
-        collisionCounter++;
-    }
 
     const ratio = canvas.width / canvas.height;
     let boxDepthRadius = 100;
@@ -253,6 +259,8 @@ window.onload = function () {
     canvas.onwheel = () => zoom(0.3 * event.deltaY);
 
     SetShininess(document.getElementById('shininess-exp'));
+
+    kaboom = document.getElementById('kaboom');
 
     // Dibujo la escena
     DrawScene();

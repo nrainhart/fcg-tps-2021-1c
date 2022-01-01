@@ -149,6 +149,18 @@ function UpdateProjectionMatrix(translation = 0, rotX = 0, rotY = 0) {
     perspectiveMatrix = ProjectionMatrix(canvas, translation, rotX, rotY);
 }
 
+function setLightDirection() {
+    const rotX = 0;
+    const rotY = 0;
+
+    const cy = Math.cos(rotY);
+    const sy = Math.sin(rotY);
+    const cx = Math.cos(rotX);
+    const sx = Math.sin(rotX);
+    meshDrawers.forEach(meshDrawer => meshDrawer.setLightDir(-sy, cy * sx, -cy * cx));
+    DrawScene();
+}
+
 // Funcion que renderiza la escena.
 function DrawScene() {
     // 2. Limpiamos la escena
@@ -229,8 +241,7 @@ function MatrixMult(A, B) {
 window.onload = function () {
     InitWebGL();
 
-    // Componente para la luz
-    lightView = new LightView();
+    setLightDirection();
 
     canvas.onclick = canvas.requestPointerLock;
     document.addEventListener('pointerlockchange', lockChangeAlert, false);

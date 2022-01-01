@@ -7,11 +7,6 @@ let cameraPosition = [0, 0, 0]
 let camera_u = [1, 0, 0, 0];
 let camera_v = [0, 1, 0, 0];
 let camera_w = [0, 0, 1, 0];
-let autorot = 0;
-
-// Por ahora usamos bounding boxes para aproximar el volumen de los asteroides. En el futuro capaz queramos
-// "bounding spheres" para que sea un poco más preciso.
-const meshBoundingBoxes = () => meshDrawers.map(meshDrawer => meshDrawer.getBoundingBox());
 
 // Funcion de inicialización, se llama al cargar la página
 function InitWebGL() {
@@ -117,6 +112,8 @@ let kaboom;
 function ProjectionMatrix(canvas, translation, rotX = 0, rotY = 0, fov_angle = 60) {
 
     let offsetCameraPosition = math.add(cameraPosition, math.multiply(camera_w.slice(0, 3), -10 * translation));
+    // Por ahora usamos bounding boxes para aproximar el volumen de los asteroides. En el futuro capaz queramos
+    // "bounding spheres" para que sea un poco más preciso.
     const collidingAsteroidIndex = meshDrawers.findIndex(meshDrawer => meshDrawer.getBoundingBox().contains(offsetCameraPosition));
     if (collidingAsteroidIndex !== -1) {
         kaboom.classList.add('visible')
@@ -168,7 +165,7 @@ function DrawScene() {
 
     meshDrawers.forEach(meshDrawer => {
         // 1. Obtenemos las matrices de transformación
-        var mv = GetModelViewMatrix(meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2], 0, autorot);
+        var mv = GetModelViewMatrix(meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2], 0, 0);
         var mvp = MatrixMult(perspectiveMatrix, mv);
 
         // 3. Le pedimos a cada objeto que se dibuje a si mismo
@@ -269,7 +266,7 @@ window.onload = function () {
     animate();
     canvas.onwheel = () => zoom(0.3 * event.deltaY);
 
-    SetShininess(document.getElementById('shininess-exp'));
+    SetShininess(50);
 
     kaboom = document.getElementById('kaboom');
 
@@ -296,29 +293,6 @@ const lockChangeAlert = () => {
         document.addEventListener("mousemove", updatePosition, false);
     } else {
         document.removeEventListener("mousemove", updatePosition, false);
-    }
-}
-
-// Control de la calesita de rotación
-var timer;
-
-function AutoRotate(param) {
-    // Si hay que girar...
-    if (param.checked) {
-        // Vamos rotando una cantidad constante cada 30 ms
-        timer = setInterval(function () {
-                var v = document.getElementById('rotation-speed').value;
-                autorot += 0.0005 * v;
-                if (autorot > 2 * Math.PI) autorot -= 2 * Math.PI;
-
-                // Renderizamos
-                DrawScene();
-            }, 30
-        );
-        document.getElementById('rotation-speed').disabled = false;
-    } else {
-        clearInterval(timer);
-        document.getElementById('rotation-speed').disabled = true;
     }
 }
 
@@ -359,22 +333,8 @@ function LoadObj(objData) {
     meshDrawers.forEach(meshDrawer => meshDrawer.setMesh(mesh));
 }
 
-// Cargar archivo obj
-function LoadObjFromInput(param) {
-    let file = param.files && param.files[0];
-    if (file) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            let objData = e.target.result;
-            LoadObj(objData);
-            DrawScene();
-        }
-        reader.readAsText(file);
-    }
-}
-
 function LoadTexture(src) {
-    var img = document.getElementById('texture-img');
+    const img = document.getElementById('texture-img');
     img.onload = function () {
         meshDrawers.forEach(meshDrawer => meshDrawer.setTexture(img));
         DrawScene();
@@ -382,23 +342,8 @@ function LoadTexture(src) {
     img.src = src;
 }
 
-// Cargar textura
-function LoadTextureFromInput(param) {
-    if (param.files && param.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            let src = e.target.result;
-            LoadTexture(src);
-        };
-        reader.readAsDataURL(param.files[0]);
-    }
-}
-
-// Setear Intensidad
-function SetShininess(param) {
-    var exp = param.value;
-    var s = Math.pow(10, exp / 25);
-    document.getElementById('shininess-value').innerText = s.toFixed(s < 10 ? 2 : 0);
+function SetShininess(value) {
+    const s = Math.pow(10, value / 25);
     meshDrawers.forEach(meshDrawer => meshDrawer.setShininess(s));
     DrawScene();
 }

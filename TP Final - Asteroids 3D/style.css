@@ -31,49 +31,8 @@ input[type=range] {
     position: relative;
 }
 
-#controls-div {
+#texture-img {
     display: none;
-    vertical-align: top;
-    background-color: rgb(58, 3, 80);
-    overflow: auto;
-}
-
-#controls {
-    padding: 1em;
-}
-
-.control-group {
-    position: relative;
-    max-width: 12em;
-}
-
-.control {
-    padding: 0.2em;
-}
-
-#lightcontrol {
-    width: 12em;
-    height: 12em;
-    background-color: rgb(58, 3, 80);
-    outline: 1px solid white;
-    outline-offset: -1px;
-}
-
-#lightcontrol-label {
-    position: absolute;
-    top: 0.2em;
-    left: 0.2em;
-    pointer-events: none;
-}
-
-#shininess-label {
-    float: left;
-}
-
-#shininess-value {
-    float: right;
-    text-align: right;
-    width: 4em;
 }
 
 #kaboom {
@@ -103,44 +62,11 @@ input[type=range] {
         width: 100%;
         height: 100%;
     }
-
-    #controls-div {
-        display: none;
-        width: 14em;
-        height: 100%;
-    }
-
-    .control-group {
-        margin-top: 1em;
-        overflow: hidden;
-    }
-
-    #texture-img {
-        width: 100%;
-        height: auto;
-    }
 }
 
 @media (orientation: portrait) {
     #canvas-div {
         width: 100%;
         height: 100%;
-    }
-
-    #controls-div {
-        display: none;
-        width: 100%;
-        height: 14em;
-    }
-
-    .control-group {
-        display: inline-block;
-        vertical-align: top;
-        margin-left: 2em;
-    }
-
-    #texture-img {
-        width: auto;
-        height: calc(100% - 2em);
     }
 }

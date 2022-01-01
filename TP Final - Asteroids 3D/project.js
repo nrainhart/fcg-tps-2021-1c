@@ -1,5 +1,6 @@
 // Estructuras globales e inicializaciones
-let meshDrawers;         // clase para contener el comportamiento de la malla
+let skybox;             // clase para contener el comportamiento del fondo
+let meshDrawers;        // clase para contener el comportamiento de las mallas
 let canvas, gl;         // canvas y contexto WebGL
 let perspectiveMatrix;	// matriz de perspectiva
 
@@ -22,7 +23,8 @@ function InitWebGL() {
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.DEPTH_TEST); // habilitar test de profundidad
 
-    // Inicializar los shaders y buffers para renderizar
+    skybox = new Skybox();
+
     const coords = [];
     for (let i = 0; i < 5; i++) {
         for (let j = 0; j < 5; j++) {
@@ -163,6 +165,7 @@ function DrawScene() {
     // 2. Limpiamos la escena
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    skybox.draw();
     meshDrawers.forEach(meshDrawer => {
         // 1. Obtenemos las matrices de transformación
         var mv = GetModelViewMatrix(meshDrawer.initialPosition[0], meshDrawer.initialPosition[1], meshDrawer.initialPosition[2], 0, 0);

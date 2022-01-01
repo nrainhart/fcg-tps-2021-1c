@@ -2,7 +2,7 @@
 // Cada una de las rotaciones se aplican sobre el eje x e y, respectivamente. La función retorna la combinación de las
 // transformaciones 3D (rotación, traslación y proyección) en una matriz de 4x4, representada por un arreglo en formato
 // column-major.
-function GetModelViewMatrix(translationX, translationY, translationZ, rotationX, rotationY) {
+function GetModelViewMatrix(translationX = 0, translationY = 0, translationZ = 0, rotationX = 0, rotationY = 0) {
     // Matriz de traslación
     const trans = [
         1, 0, 0, 0,
@@ -29,7 +29,7 @@ function GetModelViewMatrix(translationX, translationY, translationZ, rotationX,
         0, 0, 0, 1
     ];
 
-    return [rotY, rotX, trans].reduce((firstTransform, secondTransform) => MatrixMult(secondTransform, firstTransform));
+    return [rotY, rotX, trans].reduce((firstTransform, secondTransform) => matrixMult(secondTransform, firstTransform));
 }
 
 class MeshDrawer {

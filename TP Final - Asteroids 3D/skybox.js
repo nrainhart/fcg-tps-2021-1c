@@ -14,37 +14,39 @@ class Skybox {
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
 
+        const modelRoot = './models/space-skybox/red';
+
         const faceInfos = [
             {
                 target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-                url: './models/computer-history-museum/pos-x.jpg',
+                url: `${modelRoot}/pos-x.jpg`,
             },
             {
                 target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-                url: './models/computer-history-museum/neg-x.jpg',
+                url: `${modelRoot}/neg-x.jpg`,
             },
             {
                 target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-                url: './models/computer-history-museum/pos-y.jpg',
+                url: `${modelRoot}/pos-y.jpg`,
             },
             {
                 target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-                url: './models/computer-history-museum/neg-y.jpg',
+                url: `${modelRoot}/neg-y.jpg`,
             },
             {
                 target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-                url: './models/computer-history-museum/pos-z.jpg',
+                url: `${modelRoot}/pos-z.jpg`,
             },
             {
                 target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-                url: './models/computer-history-museum/neg-z.jpg',
+                url: `${modelRoot}/neg-z.jpg`,
             },
         ];
         faceInfos.forEach(({target, url}) => {
             const level = 0;
             const internalFormat = gl.RGBA;
-            const width = 512;
-            const height = 512;
+            const width = 2048;
+            const height = 2048;
             const format = gl.RGBA;
             const type = gl.UNSIGNED_BYTE;
             // Setear cara sin imagen para que se renderee de inmediato

@@ -207,6 +207,6 @@ var meshFS = `
 		vec4 i = vec4(1.0, 1.0, 1.0, 1.0);
 		vec4 ks = vec4(0.5, 0.5, 0.5, 1);
 
-		gl_FragColor = max(cosTita * i * (kd + (pow(cosTita, shininess)*ks)/cosTita) + 0.01 * kd, 0.25 * kd);
+		gl_FragColor = max(cosTita * i * (kd + (pow(cosTita, shininess)*ks)/cosTita) + 0.01 * kd - 0.02, kd - 0.5);
 	}
 `;

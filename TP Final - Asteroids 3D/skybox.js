@@ -14,7 +14,7 @@ class Skybox {
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
 
-        const modelRoot = './models/space-skybox/red';
+        const modelRoot = './assets/space-skybox/red';
 
         const faceInfos = [
             {
@@ -114,27 +114,27 @@ class Skybox {
 }
 
 const skyboxVS = `
-	attribute vec4 a_position;
-	
-  varying vec4 v_position;
-  
-  void main() {
+attribute vec4 a_position;
+
+varying vec4 v_position;
+
+void main() {
     v_position = a_position;
     gl_Position = a_position;
     gl_Position.z = 1.0;
-  }
+}
 `;
 
 const skyboxFS = `
-	precision mediump float;
+precision mediump float;
 
-  uniform samplerCube u_skybox;
-  uniform mat4 u_viewDirectionProjectionInverse;
+uniform samplerCube u_skybox;
+uniform mat4 u_viewDirectionProjectionInverse;
 
-  varying vec4 v_position;
-  
-  void main() {
+varying vec4 v_position;
+
+void main() {
     vec4 t = u_viewDirectionProjectionInverse * v_position;
     gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
-  }
+}
 `;

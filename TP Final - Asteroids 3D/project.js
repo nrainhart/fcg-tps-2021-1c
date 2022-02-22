@@ -39,8 +39,8 @@ function InitWebGL() {
         }
     }
     meshDrawers = coords.map(coord => new MeshDrawer(coord));
-    LoadObj(loadFile('./models/asteroid.obj'));
-    LoadTexture('./models/asteroid.jpg');
+    LoadObj(loadFile('./assets/asteroid.obj'));
+    LoadTexture('./assets/asteroid.jpg');
 
     // Setear el tamaño del viewport
     UpdateCanvasSize();

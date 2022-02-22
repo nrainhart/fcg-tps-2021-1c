@@ -56,9 +56,6 @@ class MeshDrawer {
         this.textura = gl.createTexture();
 
         this.texGPULocation = gl.getUniformLocation(this.prog, 'texGPU');
-        this.useTexLocation = gl.getUniformLocation(this.prog, 'useTexture');
-        gl.useProgram(this.prog);
-        gl.uniform1i(this.useTexLocation, true);
 
         this.texCoordsLocation = gl.getAttribLocation(this.prog, 'tcoord');
 
@@ -141,12 +138,6 @@ class MeshDrawer {
         gl.uniform1i(this.texGPULocation, 0); // Unidad 0
     }
 
-    // Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Mostrar textura'
-    showTexture(show) {
-        gl.useProgram(this.prog);
-        gl.uniform1i(this.useTexLocation, show);
-    }
-
     // Este método se llama al actualizar la dirección de la luz desde la interfaz
     setLightDir(x, y, z) {
         gl.useProgram(this.prog);
@@ -193,7 +184,6 @@ var meshFS = `
 	varying vec4 vertCoord;
 
 	uniform sampler2D texGPU;
-	uniform bool useTexture;
 
 	void main() {
 		vec3 normal = normalize(mn * normCoord);
@@ -203,7 +193,7 @@ var meshFS = `
 		vec4 r = vec4(2.0*dot(lightDir, normCoord)*normCoord - lightDir, 1);
 		float cosDelta = max(0.0, dot(v,r));
 
-		vec4 kd = useTexture ? texture2D(texGPU, texCoord) : vec4(1.0,0.0,gl_FragCoord.z*gl_FragCoord.z,1.0);
+		vec4 kd = texture2D(texGPU, texCoord);
 		vec4 i = vec4(1.0, 1.0, 1.0, 1.0);
 		vec4 ks = vec4(0.5, 0.5, 0.5, 1);
 

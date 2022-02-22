@@ -399,12 +399,6 @@ const lockChangeAlert = () => {
     }
 }
 
-// Control de textura visible
-function ShowTexture(param) {
-    meshDrawers.forEach(meshDrawer => meshDrawer.showTexture(param.checked));
-    DrawScene();
-}
-
 function loadFile(filePath) {
     var result = null;
     var xmlhttp = new XMLHttpRequest();
